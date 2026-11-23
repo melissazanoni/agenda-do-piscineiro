@@ -14,4 +14,9 @@ export const env = {
   appTimezone: process.env.APP_TIMEZONE ?? 'America/Sao_Paulo',
   frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:5173',
   nodeEnv: process.env.NODE_ENV ?? 'development',
+  smtpHost: process.env.SMTP_HOST ?? '',
+  smtpPort: Number(process.env.SMTP_PORT ?? 2525),
+  smtpUser: process.env.SMTP_USER ?? '',
+  smtpPass: process.env.SMTP_PASS ?? '',
+  mailFrom: process.env.MAIL_FROM ?? 'Agenda do Piscineiro <no-reply@agendapiscineiro.com>',
 };

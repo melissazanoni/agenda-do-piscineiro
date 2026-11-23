@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { env } from '../../config/env';
 import { AppError } from '../../utils/AppError';
+import { sendPasswordResetEmail } from '../../utils/mailer';
 import * as repo from './auth.repository';
 import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema } from './auth.schemas';
 
@@ -54,9 +55,10 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
     await repo.setResetToken(user.user_id, sha256(token));
 
     const link = `${env.frontendUrl}/redefinir-senha?token=${encodeURIComponent(token)}`;
-    // TODO: enviar o link por e-mail (ex.: com Nodemailer). Por enquanto ele aparece no terminal.
-    console.log(`[recuperação de senha] ${user.email}: ${link}`);
-    if (env.nodeEnv === 'development') response.resetLink = link; // facilita os testes
+    await sendPasswordResetEmail(user.email, link);
+
+    // Só expõe o link na resposta se o SMTP não estiver configurado
+    if (env.nodeEnv === 'development' && !env.smtpHost) response.resetLink = link;
   }
 
   res.json(response);

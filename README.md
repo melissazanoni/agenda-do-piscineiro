@@ -18,6 +18,7 @@ Sistema do Projeto Integrador **Agenda do Piscineiro** (TADS) para piscineiros o
 | pg | Executa o SQL no PostgreSQL (RNF01) |
 | bcryptjs | Criptografa as senhas (RNF03) |
 | jsonwebtoken (JWT) | Gera o token de login (RN09) |
+| Nodemailer | Envia e-mails de recuperação de senha via SMTP (RF10) |
 | zod | Valida os dados recebidos, com mensagens em português |
 | tsx | Roda o TypeScript direto durante o desenvolvimento |
 | React + React Router | Telas e navegação entre elas |
@@ -35,7 +36,7 @@ sudo apt update
 sudo apt install -y git curl postgresql
 
 # Node.js 24 LTS (o do apt é antigo demais)
-curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh
+curl -fsSL [https://deb.nodesource.com/setup_24.x](https://deb.nodesource.com/setup_24.x) -o nodesource_setup.sh
 sudo -E bash nodesource_setup.sh
 sudo apt install -y nodejs
 rm nodesource_setup.sh
@@ -46,8 +47,8 @@ Confira: `node -v` deve mostrar `v20` ou mais novo, e `psql --version` deve most
 **Opcional: pgAdmin** (ver o banco com uma interface):
 ```bash
 sudo mkdir -p /etc/apt/keyrings
-curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo gpg --dearmor -o /etc/apt/keyrings/packages-pgadmin-org.gpg
-sudo sh -c 'echo "deb [signed-by=/etc/apt/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list && apt update'
+curl -fsS [https://www.pgadmin.org/static/packages_pgadmin_org.pub](https://www.pgadmin.org/static/packages_pgadmin_org.pub) | sudo gpg --dearmor -o /etc/apt/keyrings/packages-pgadmin-org.gpg
+sudo sh -c 'echo "deb [signed-by=/etc/apt/keyrings/packages-pgadmin_org.gpg] [https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$(lsb_release](https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$(lsb_release) -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list && apt update'
 sudo apt install -y pgadmin4-desktop
 ```
 Para conectar: **Servers → Register → Server**, com Host `localhost`, Port `5432`, Username `postgres` e a senha do passo 3.
@@ -83,6 +84,16 @@ Abra o `.env` (`code .env` ou `nano .env`) e ajuste:
 ```env
 DATABASE_URL=postgresql://postgres:minhasenha@localhost:5432/agenda_piscineiro
 JWT_SECRET=qualquer-texto-grande-e-aleatorio
+```
+
+*(Opcional)* Para testar o envio real de e-mail na recuperação de senha via **Mailtrap**, preencha também as variáveis `SMTP_*` no `.env` (se ficarem vazias, o link de redefinição aparece no terminal da API e na tela em modo de desenvolvimento):
+
+```env
+SMTP_HOST=sandbox.smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_USER=seu_usuario_mailtrap
+SMTP_PASS=sua_senha_mailtrap
+MAIL_FROM="Agenda do Piscineiro <no-reply@agendapiscineiro.com>"
 ```
 
 Crie as tabelas e ligue a API:
@@ -138,7 +149,7 @@ agenda-piscineiro/
 │       ├── app.ts              -> registra as rotas
 │       ├── config/             -> variáveis de ambiente e conexão com o banco
 │       ├── middlewares/        -> autenticação (RN09) e tratamento de erros
-│       ├── utils/              -> datas, validação de CPF/CNPJ, mensagens de validação
+│       ├── utils/              -> datas, validação de CPF/CNPJ, envio de e-mails (mailer.ts), mensagens de validação
 │       └── modules/
 │           ├── auth/           -> cadastro, login e recuperação de senha
 │           ├── addresses/      -> endereços (usados por clientes e piscinas)
