@@ -29,15 +29,16 @@ async function validateSchedule(
   }
   const conflicts = await repo.findScheduleConflicts(pool, userId, dates, time, ignoreId);
   if (conflicts.length > 0) {
+    const details = conflicts.map((c) => `${formatBr(c.scheduled_date)} às ${c.scheduled_time}`).join(', ');
     throw new AppError(
-      `Já existe serviço agendado neste horário em: ${conflicts.map(formatBr).join(', ')}.`, 409, // RN04
+      `Já existe serviço agendado com menos de 5 minutos de intervalo em: ${details}.`, 409, // RN04
     );
   }
 }
 
 /** Lista serviços com filtros: ?status=&customer_id=&pool_id=&from=&to= */
 export async function list(req: Request, res: Response): Promise<void> {
-  res.json(await repo.listServices(pool,req.userId!, serviceListQuery.parse(req.query)));
+  res.json(await repo.listServices(pool, req.userId!, serviceListQuery.parse(req.query)));
 }
 
 /** RF06 - Agendamentos futuros (?days=30 para limitar o período) */

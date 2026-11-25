@@ -34,6 +34,11 @@ export type ServiceFilters = {
   to?: string;
 };
 
+export type ScheduleConflict = {
+  scheduled_date: string;
+  scheduled_time: string;
+};
+
 export async function listServices(db: Db, userId: number, f: ServiceFilters) {
   const { rows } = await db.query(
     `${SELECT_SERVICE}
@@ -99,22 +104,23 @@ export async function poolBelongsToCustomer(db: Db, userId: number, poolId: numb
   return (rowCount ?? 0) > 0;
 }
 
-/** RN04 - Datas em que o horário já está ocupado por outro serviço não cancelado DO MESMO usuário */
+/** RN04 - Datas em que já existe serviço não cancelado em um intervalo menor que 15 minutos */
 export async function findScheduleConflicts(
   db: Db, userId: number, dates: string[], time: string, ignoreServiceId: number | null = null,
-): Promise<string[]> {
-  const { rows } = await db.query<{ scheduled_date: string }>(
-    `SELECT s.scheduled_date FROM services s
+): Promise<ScheduleConflict[]> {
+  const { rows } = await db.query<ScheduleConflict>(
+    `SELECT s.scheduled_date, to_char(s.scheduled_time, 'HH24:MI') AS scheduled_time
+     FROM services s
      JOIN customers c ON c.customer_id = s.customer_id
      WHERE c.user_id = $4
        AND s.status <> 'cancelado'
-       AND s.scheduled_time = $1
+       AND ABS(EXTRACT(EPOCH FROM (s.scheduled_time - $1::time))) < 300
        AND s.scheduled_date = ANY($2::date[])
        AND ($3::int IS NULL OR s.service_id <> $3)
-     ORDER BY s.scheduled_date`,
+     ORDER BY s.scheduled_date, s.scheduled_time`,
     [time, dates, ignoreServiceId, userId],
   );
-  return rows.map((r) => r.scheduled_date);
+  return rows;
 }
 
 export async function insertService(db: Db, data: CreateServiceInput, date: string): Promise<number> {
